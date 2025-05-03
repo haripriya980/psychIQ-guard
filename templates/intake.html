@@ -1,0 +1,32 @@
+<!-- templates/intake.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PsychIQ - Intake</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>PsychIQ - Mental Health Intake</h1>
+
+        {% if submitted %}
+            <div class="result-box">
+                <p><strong>Thank you!</strong> Your concern has been classified as:</p>
+                <h2 class="urgency {{ urgency|lower }}">{{ urgency }}</h2>
+            </div>
+        {% endif %}
+
+        <form method="post" action="/submit">
+            <label for="name">Your Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="symptoms">Describe what you're experiencing:</label>
+            <textarea id="symptoms" name="symptoms" rows="5" required></textarea>
+
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</body>
+</html>

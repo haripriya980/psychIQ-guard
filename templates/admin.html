@@ -1,0 +1,38 @@
+<!-- templates/admin.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PsychIQ - Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+
+        {% if patients %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Symptoms</th>
+                        <th>Urgency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in patients %}
+                        <tr>
+                            <td>{{ p.name }}</td>
+                            <td>{{ p.symptoms }}</td>
+                            <td class="{{ p.urgency|lower }}">{{ p.urgency }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No patient records yet.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

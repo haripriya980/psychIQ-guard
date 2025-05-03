@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PsychIQ Guard - Risk Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #0a0b0e;
+      color: #ffffff;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #00ff8c;
+      margin-bottom: 30px;
+    }
+
+    .entry-card {
+      background-color: #121316;
+      border-left: 6px solid #00ff8c;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    .risk-HIGH { border-color: #ff3b3b; }
+    .risk-MEDIUM { border-color: #ff9900; }
+    .risk-LOW { border-color: #00cc66; }
+
+    .tag {
+      font-size: 0.8rem;
+      background-color: #222;
+      border-radius: 5px;
+      padding: 2px 8px;
+      margin-left: 8px;
+      text-transform: uppercase;
+    }
+
+    .tag-HIGH { background-color: #ff3b3b; }
+    .tag-MEDIUM { background-color: #ff9900; }
+    .tag-LOW { background-color: #00cc66; }
+
+    .tag-emotion {
+      background-color: #333;
+      border: 1px solid #555;
+      color: #ddd;
+    }
+
+    .visual-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .visual-group img {
+      max-width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.6);
+      background-color: #181a1f;
+      padding: 10px;
+    }
+
+    canvas {
+      background-color: #181a1f;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 PsychIQ Guard: Triage Dashboard</h1>
+
+  <div class="visual-group">
+    <img src="/static/visuals/risk_timeline.png" alt="Risk Timeline" style="flex: 1 1 48%">
+    <img src="/static/visuals/emotion_frequency.png" alt="Emotion Frequency" style="flex: 1 1 48%">
+  </div>
+
+  <canvas id="riskChart" height="100"></canvas>
+  <div id="entries"></div>
+
+  <script>
+    async function loadEntries() {
+      const response = await fetch('/data/page_triage_log.json');
+      const data = await response.json();
+      const container = document.getElementById("entries");
+      container.innerHTML = '';
+
+      let high = 0, med = 0, low = 0;
+
+      const severityOrder = { "HIGH": 0, "MEDIUM": 1, "LOW": 2, "UNKNOWN": 3 };
+      data.sort((a, b) => {
+        const s1 = severityOrder[a.risk] ?? 4;
+        const s2 = severityOrder[b.risk] ?? 4;
+        if (s1 === s2) {
+          return new Date(b.timestamp) - new Date(a.timestamp);
+        }
+        return s1 - s2;
+      });
+
+      data.forEach(entry => {
+        if (entry.risk === "HIGH") high++;
+        else if (entry.risk === "MEDIUM") med++;
+        else if (entry.risk === "LOW") low++;
+
+        const card = document.createElement('div');
+        card.className = `entry-card risk-${entry.risk}`;
+        card.innerHTML = `
+          <div><strong>🕒 ${new Date(entry.timestamp).toLocaleString()}</strong></div>
+          <div><strong>Risk:</strong> <span class="tag tag-${entry.risk}">${entry.risk}</span>
+               <span class="tag tag-emotion">${entry.emotion}</span></div>
+          <div style="margin-top: 10px;"><em>${entry.snippet}</em></div>
+        `;
+        container.appendChild(card);
+      });
+
+      updateChart([high, med, low]);
+    }
+
+    let chart;
+    function updateChart(data) {
+      const ctx = document.getElementById('riskChart').getContext('2d');
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['HIGH', 'MEDIUM', 'LOW'],
+          datasets: [{
+            label: 'Entries by Risk Level',
+            data: data,
+            backgroundColor: ['#ff3b3b', '#ff9900', '#00cc66']
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { ticks: { color: '#ffffff' } },
+            y: { ticks: { color: '#ffffff' }, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    loadEntries();
+    setInterval(loadEntries, 10000);
+  </script>
+</body>
+</html>
